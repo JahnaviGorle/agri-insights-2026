@@ -1,10 +1,12 @@
 import { motion } from "framer-motion";
 import { Leaf, Menu, X } from "lucide-react";
 import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "./ui/button";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <motion.nav
@@ -16,18 +18,16 @@ const Navbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <motion.a
-            href="#"
-            className="flex items-center gap-2"
-            whileHover={{ scale: 1.02 }}
-          >
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-              <Leaf className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold text-foreground">
-              Agri<span className="text-primary">Predict</span>
-            </span>
-          </motion.a>
+          <motion.div whileHover={{ scale: 1.02 }}>
+            <Link to="/" className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+                <Leaf className="w-6 h-6 text-primary-foreground" />
+              </div>
+              <span className="text-xl font-bold text-foreground">
+                Agri<span className="text-primary">Predict</span>
+              </span>
+            </Link>
+          </motion.div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
@@ -43,7 +43,7 @@ const Navbar = () => {
             <Button variant="heroOutline" size="sm">
               Sign In
             </Button>
-            <Button variant="hero" size="sm">
+            <Button variant="hero" size="sm" onClick={() => navigate("/dashboard")}>
               Get Started
             </Button>
           </div>
@@ -78,7 +78,7 @@ const Navbar = () => {
               <Button variant="heroOutline" className="w-full">
                 Sign In
               </Button>
-              <Button variant="hero" className="w-full">
+              <Button variant="hero" className="w-full" onClick={() => navigate("/dashboard")}>
                 Get Started
               </Button>
             </div>
