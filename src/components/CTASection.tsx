@@ -2,9 +2,11 @@ import { motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "./ui/button";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const CTASection = () => {
   const [commodity, setCommodity] = useState("");
+  const navigate = useNavigate();
 
   return (
     <section className="py-24">
@@ -52,7 +54,12 @@ const CTASection = () => {
                   className="w-full h-14 px-6 rounded-full bg-background border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground placeholder:text-muted-foreground"
                 />
               </div>
-              <Button variant="hero" size="lg" className="w-full sm:w-auto group">
+              <Button 
+                variant="hero" 
+                size="lg" 
+                className="w-full sm:w-auto group"
+                onClick={() => navigate("/dashboard")}
+              >
                 Predict Now
                 <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
               </Button>
