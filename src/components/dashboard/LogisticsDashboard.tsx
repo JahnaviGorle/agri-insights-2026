@@ -1,8 +1,21 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Truck, Package, MapPin, Clock, CheckCircle2, ArrowRight, Filter } from "lucide-react";
+import { Truck, Package, MapPin, Clock, CheckCircle2, ArrowRight, Filter, Wallet, Loader2, Link as LinkIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+// Ethereum provider type
+interface EthereumProvider {
+  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+  isMetaMask?: boolean;
+}
+
+declare global {
+  interface Window {
+    ethereum?: EthereumProvider;
+  }
+}
 
 interface Order {
   id: string;
@@ -31,9 +44,30 @@ const statusConfig = {
 
 const LogisticsDashboard = ({ orders, onUpdateStatus }: LogisticsDashboardProps) => {
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
 
-  const filteredOrders = filterStatus === "all" 
-    ? orders 
+  const connectWallet = async () => {
+    setIsConnecting(true);
+    try {
+      if (typeof window.ethereum === "undefined") {
+        toast.error("Please install MetaMask!");
+        return;
+      }
+      const accounts = await window.ethereum.request({
+        method: "eth_requestAccounts"
+      }) as string[];
+      setWalletAddress(accounts[0]);
+      toast.success("Logistics wallet connected!");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to connect wallet");
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const filteredOrders = filterStatus === "all"
+    ? orders
     : orders.filter(order => order.status === filterStatus);
 
   const getNextStatus = (current: Order["status"]): Order["status"] | null => {
@@ -56,20 +90,38 @@ const LogisticsDashboard = ({ orders, onUpdateStatus }: LogisticsDashboardProps)
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-muted-foreground" />
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Filter" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Orders</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="picked_up">Picked Up</SelectItem>
-              <SelectItem value="in_transit">In Transit</SelectItem>
-              <SelectItem value="delivered">Delivered</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="flex items-center gap-4">
+          <Button
+            onClick={connectWallet}
+            disabled={isConnecting}
+            variant={walletAddress ? "outline" : "hero"}
+            className={walletAddress ? "border-accent text-accent-foreground" : "bg-accent hover:bg-accent/90 text-accent-foreground"}
+          >
+            {isConnecting ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Wallet className="w-4 h-4 mr-2" />
+            )}
+            {walletAddress
+              ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
+              : "Connect Wallet"}
+          </Button>
+
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-muted-foreground" />
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Filter" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Orders</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="picked_up">Picked Up</SelectItem>
+                <SelectItem value="in_transit">In Transit</SelectItem>
+                <SelectItem value="delivered">Delivered</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
@@ -131,13 +183,18 @@ const LogisticsDashboard = ({ orders, onUpdateStatus }: LogisticsDashboardProps)
                       <p className="text-sm text-muted-foreground mb-2">
                         Order #{order.id} • {order.quantity} kg
                       </p>
-                      
+
                       <div className="flex items-center gap-2 text-sm">
                         <MapPin className="w-4 h-4 text-primary" />
                         <span>{order.farmerLocation}</span>
                         <ArrowRight className="w-4 h-4 text-muted-foreground" />
                         <MapPin className="w-4 h-4 text-secondary" />
                         <span>{order.buyerLocation}</span>
+                      </div>
+
+                      <div className="mt-3 inline-flex items-center gap-2 px-2 py-1 rounded bg-muted/50 text-[10px] text-muted-foreground font-mono">
+                        <LinkIcon className="w-3 h-3 text-primary" />
+                        <span>TX: {order.txHash}</span>
                       </div>
                     </div>
                   </div>
@@ -149,7 +206,7 @@ const LogisticsDashboard = ({ orders, onUpdateStatus }: LogisticsDashboardProps)
                     </div>
 
                     {nextStatus && (
-                      <Button 
+                      <Button
                         variant="outline"
                         onClick={() => onUpdateStatus(order.id, nextStatus)}
                         className="shrink-0"
@@ -175,7 +232,7 @@ const LogisticsDashboard = ({ orders, onUpdateStatus }: LogisticsDashboardProps)
                       const stepConfig = statusConfig[status];
                       const StepIcon = stepConfig.icon;
                       const isCompleted = (["pending", "picked_up", "in_transit", "delivered"] as const).indexOf(order.status) >= i;
-                      
+
                       return (
                         <div key={status} className="flex items-center">
                           <div className={`

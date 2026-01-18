@@ -38,10 +38,10 @@ const BuyerDashboard = ({ products, onPurchase }: BuyerDashboardProps) => {
         return;
       }
 
-      const accounts = await window.ethereum.request({ 
-        method: "eth_requestAccounts" 
+      const accounts = await window.ethereum.request({
+        method: "eth_requestAccounts"
       }) as string[];
-      
+
       setWalletAddress(accounts[0]);
       toast.success("Wallet connected successfully!");
     } catch (error: any) {
@@ -96,9 +96,9 @@ const BuyerDashboard = ({ products, onPurchase }: BuyerDashboardProps) => {
   return (
     <div className="space-y-6">
       {/* Buyer Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-secondary/20 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-2xl bg-secondary/10 flex items-center justify-center">
             <ShoppingCart className="w-6 h-6 text-secondary" />
           </div>
           <div>
@@ -111,18 +111,36 @@ const BuyerDashboard = ({ products, onPurchase }: BuyerDashboardProps) => {
           variant={walletAddress ? "outline" : "hero"}
           onClick={connectWallet}
           disabled={isConnecting}
-          className={walletAddress ? "border-primary text-primary" : "bg-secondary hover:bg-secondary/90"}
+          className={walletAddress ? "border-secondary text-secondary" : "bg-secondary hover:bg-secondary/90"}
         >
           {isConnecting ? (
             <Loader2 className="w-4 h-4 animate-spin mr-2" />
           ) : (
             <Wallet className="w-4 h-4 mr-2" />
           )}
-          {walletAddress 
-            ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}` 
+          {walletAddress
+            ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
             : "Connect Wallet"
           }
         </Button>
+      </div>
+
+      <div className="glass-card p-6 border-secondary/20 bg-secondary/5 mb-8">
+        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+          <CheckCircle className="w-5 h-5 text-secondary" />
+          Blockchain-Enabled Secured Process
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="space-y-1 text-center md:text-left">
+            <div className="text-secondary font-bold text-xs uppercase tracking-wider">Verification (Provenance)</div>
+          </div>
+          <div className="space-y-1 text-center md:text-left">
+            <div className="text-secondary font-bold text-xs uppercase tracking-wider">Settlement (Smart Contracts)</div>
+          </div>
+          <div className="space-y-1 text-center md:text-left">
+            <div className="text-secondary font-bold text-xs uppercase tracking-wider">Transparency (Shared Ledger)</div>
+          </div>
+        </div>
       </div>
 
       {/* Product Grid */}
@@ -151,7 +169,7 @@ const BuyerDashboard = ({ products, onPurchase }: BuyerDashboardProps) => {
               </div>
 
               <h3 className="text-lg font-bold mb-2">{product.cropType}</h3>
-              
+
               <div className="space-y-2 text-sm text-muted-foreground mb-4">
                 <div className="flex justify-between">
                   <span>Quantity:</span>
@@ -173,14 +191,16 @@ const BuyerDashboard = ({ products, onPurchase }: BuyerDashboardProps) => {
 
               <div className="border-t border-border pt-4 mb-4">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-sm text-muted-foreground">Price:</span>
-                  <span className="text-2xl font-bold text-primary">₹{product.price.toLocaleString()}</span>
+                  <span className="text-sm font-semibold text-foreground">Selling Price:</span>
+                  <div className="text-right">
+                    <span className="text-2xl font-bold text-primary">₹{product.price.toLocaleString()}</span>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">per kg</p>
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground text-right">per quintal</p>
               </div>
 
-              <Button 
-                variant="hero" 
+              <Button
+                variant="hero"
                 className="w-full bg-secondary hover:bg-secondary/90"
                 onClick={() => handleBuy(product)}
                 disabled={isTransacting && selectedProduct?.id === product.id}
@@ -237,8 +257,8 @@ const BuyerDashboard = ({ products, onPurchase }: BuyerDashboardProps) => {
                   <Button variant="outline" className="flex-1" onClick={closeModal}>
                     Close
                   </Button>
-                  <Button 
-                    variant="hero" 
+                  <Button
+                    variant="hero"
                     className="flex-1"
                     onClick={() => window.open(`https://etherscan.io/tx/${txHash}`, "_blank")}
                   >
