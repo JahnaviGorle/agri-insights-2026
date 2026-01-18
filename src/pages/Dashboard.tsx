@@ -1,14 +1,67 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Leaf, ArrowLeft, TrendingUp, BarChart3 } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import PricePredictionForm from "@/components/dashboard/PricePredictionForm";
-import DemandForecastingForm from "@/components/dashboard/DemandForecastingForm";
+import { Leaf, ArrowLeft } from "lucide-react";
+import RoleToggle from "@/components/dashboard/RoleToggle";
+import FarmerDashboard from "@/components/dashboard/FarmerDashboard";
+import BuyerDashboard from "@/components/dashboard/BuyerDashboard";
+import LogisticsDashboard from "@/components/dashboard/LogisticsDashboard";
 import FloatingBlobs from "@/components/FloatingBlobs";
+import type { Product } from "@/components/dashboard/FarmerDashboard";
+
+type Role = "farmer" | "buyer" | "logistics";
+
+interface Order {
+  id: string;
+  productName: string;
+  quantity: number;
+  buyerAddress: string;
+  farmerLocation: string;
+  buyerLocation: string;
+  status: "pending" | "picked_up" | "in_transit" | "delivered";
+  createdAt: Date;
+  estimatedDelivery: Date;
+  txHash: string;
+}
 
 const Dashboard = () => {
-  const [activeTab, setActiveTab] = useState("price");
+  const [activeRole, setActiveRole] = useState<Role>("farmer");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+
+  const handleListProduct = (product: Product) => {
+    setProducts((prev) => [...prev, product]);
+  };
+
+  const handlePurchase = (productId: string, txHash: string) => {
+    const product = products.find((p) => p.id === productId);
+    if (!product) return;
+
+    // Create order for logistics
+    const newOrder: Order = {
+      id: `ORD-${Date.now()}`,
+      productName: product.cropType,
+      quantity: product.quantity,
+      buyerAddress: `0x${Math.random().toString(16).slice(2, 42)}`,
+      farmerLocation: `${product.marketLocation}, ${product.state}`,
+      buyerLocation: "Buyer Location",
+      status: "pending",
+      createdAt: new Date(),
+      estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+      txHash,
+    };
+
+    setOrders((prev) => [...prev, newOrder]);
+    setProducts((prev) => prev.filter((p) => p.id !== productId));
+  };
+
+  const handleUpdateOrderStatus = (orderId: string, status: Order["status"]) => {
+    setOrders((prev) =>
+      prev.map((order) =>
+        order.id === orderId ? { ...order, status } : order
+      )
+    );
+  };
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
@@ -47,58 +100,38 @@ const Dashboard = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="max-w-5xl mx-auto"
+          className="max-w-6xl mx-auto"
         >
           {/* Page Title */}
-          <div className="mb-8">
+          <div className="text-center mb-8">
             <h1 className="text-3xl md:text-4xl font-bold mb-2">
               Agri Market <span className="text-gradient">Insights</span> Platform
             </h1>
             <p className="text-muted-foreground">
-              Predict <span className="font-semibold text-primary">Crop Prices</span> and{" "}
-              <span className="font-semibold text-secondary">Market Demand</span> using Machine Learning.
+              Choose your role to access specialized features
             </p>
           </div>
 
-          {/* Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="glass-card p-1.5 mb-8 w-fit">
-              <TabsTrigger 
-                value="price" 
-                className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-xl px-6 py-3 transition-all"
-              >
-                <TrendingUp className="w-4 h-4" />
-                <span>Price Prediction</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="demand" 
-                className="flex items-center gap-2 data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground rounded-xl px-6 py-3 transition-all"
-              >
-                <BarChart3 className="w-4 h-4" />
-                <span>Demand Forecasting</span>
-              </TabsTrigger>
-            </TabsList>
+          {/* Role Toggle */}
+          <RoleToggle activeRole={activeRole} onRoleChange={setActiveRole} />
 
-            <TabsContent value="price">
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <PricePredictionForm />
-              </motion.div>
-            </TabsContent>
-
-            <TabsContent value="demand">
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <DemandForecastingForm />
-              </motion.div>
-            </TabsContent>
-          </Tabs>
+          {/* Role-specific Dashboard */}
+          <motion.div
+            key={activeRole}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            {activeRole === "farmer" && (
+              <FarmerDashboard onListProduct={handleListProduct} />
+            )}
+            {activeRole === "buyer" && (
+              <BuyerDashboard products={products} onPurchase={handlePurchase} />
+            )}
+            {activeRole === "logistics" && (
+              <LogisticsDashboard orders={orders} onUpdateStatus={handleUpdateOrderStatus} />
+            )}
+          </motion.div>
         </motion.div>
       </main>
     </div>
