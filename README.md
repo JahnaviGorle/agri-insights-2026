@@ -97,7 +97,8 @@ The frontend will be available at `http://localhost:5173`
 cd backend
 
 # Create a virtual environment (recommended)
-python -m venv venv
+py -3.8 -m venv venv
+
 
 # Activate virtual environment
 # On Windows:
